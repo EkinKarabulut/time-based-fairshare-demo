@@ -87,7 +87,7 @@ The dashboard (`grafana/dashboard.json`) includes:
 
 **Dashboard settings**: Dark theme, 5s auto-refresh, 15-minute rolling window, kiosk mode.
 
-## Partner Story (for explaining the demo)
+## Demo Flow
 
 ### Setup
 
@@ -112,29 +112,6 @@ The dashboard (`grafana/dashboard.json`) includes:
 *"With time-based fairshare enabled, the scheduler tracks historical usage. It sees that Vision has been consuming far more over-quota resources than LLM over time. So it boosts LLM's effective fair share and begins reclaiming GPUs from Vision's over-quota allocation."*
 
 *"Watch the allocation chart — the lines cross over. LLM's post-training pods start scheduling. The Pending GPU Demand chart drops as those blocked pods get resources. Over time, the allocation oscillates fairly between both teams."*
-
-### The Takeaway
-
-*"Time-based fairshare gives you three things: (1) No wasted GPUs — teams can freely borrow idle capacity. (2) No starvation — when contention happens, the scheduler reclaims borrowed GPUs based on historical fairness. (3) Automatic — no manual intervention needed, the scheduler handles rebalancing."*
-
-## Recording for Booth Loop
-
-### Using OBS Studio
-
-1. Set up OBS at 1920x1080, 60fps
-2. Create scene: full-screen browser capture of Grafana in kiosk mode
-3. Run the "before" demo, record for 3-5 minutes
-4. Add a title overlay: "WITHOUT Time-Based Fairshare"
-5. Run the "after" demo, record for 5-8 minutes
-6. Add a title overlay: "WITH Time-Based Fairshare"
-7. Combine clips, add transition between before/after
-8. Export as loop-friendly MP4
-
-### Tips
-
-- Use browser zoom (150%) for readability at booth distance
-- Add a "fast forward" indicator when waiting for oscillation
-- The oscillation takes ~2-5 minutes to become visible (tunable)
 
 ## Tuning Parameters
 
