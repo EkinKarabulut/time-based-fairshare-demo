@@ -2,7 +2,7 @@
 
 A live demo showing how KAI Scheduler's time-based fairshare feature solves GPU allocation starvation between competing teams. Designed as a **looping booth display** with Grafana dashboards.
 
-## Scenario (from [NVIDIA Blog](https://developer.nvidia.com/blog/ensuring-balanced-gpu-allocation-in-kubernetes-clusters-with-time-based-fairshare/))
+## Scenario (from [Initial Blog](https://developer.nvidia.com/blog/ensuring-balanced-gpu-allocation-in-kubernetes-clusters-with-time-based-fairshare/))
 
 - **100 GPU cluster** shared between two teams
 - **LLM Team**: 30 GPU guaranteed quota, runs customer-facing inference endpoints (10 GPUs)
