@@ -1,0 +1,11 @@
+# Copyright 2025 NVIDIA CORPORATION
+# SPDX-License-Identifier: Apache-2.0
+
+# SchedulingShard without time-based fairshare (stateless fair share only).
+
+apiVersion: kai.scheduler/v1
+kind: SchedulingShard
+metadata:
+  name: default
+spec:
+  kValue: 1.0

@@ -1,0 +1,40 @@
+# Copyright 2025 NVIDIA CORPORATION
+# SPDX-License-Identifier: Apache-2.0
+
+# Vision Team - R&D training jobs (PyTorchJob)
+# 35 jobs x 2 GPUs each = 70 GPU demand
+# PyTorchJob with restartPolicy: OnFailure ensures preempted pods
+# are recreated as Pending (enabling oscillation with TBF).
+
+apiVersion: "kubeflow.org/v1"
+kind: "PyTorchJob"
+metadata:
+  name: vision-rd-PODINDEX
+  namespace: workloads
+  labels:
+    kai.scheduler/queue: vision-team
+    app: vision-rd
+    team: vision-team
+    workload-type: training
+spec:
+  pytorchReplicaSpecs:
+    Master:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        metadata:
+          labels:
+            kai.scheduler/queue: vision-team
+            app: vision-rd
+            team: vision-team
+            workload-type: training
+        spec:
+          schedulerName: kai-scheduler
+          terminationGracePeriodSeconds: 0
+          containers:
+            - name: pytorch
+              image: ubuntu
+              args: ["sleep", "infinity"]
+              resources:
+                limits:
+                  nvidia.com/gpu: "2"

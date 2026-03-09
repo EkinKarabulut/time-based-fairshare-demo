@@ -1,0 +1,42 @@
+# Copyright 2025 NVIDIA CORPORATION
+# SPDX-License-Identifier: Apache-2.0
+
+# Simulator config: WITH time-based fairshare
+# KValue 1.0 gives historical usage significant weight in fairshare
+# Result: resources oscillate fairly between teams over time
+
+Cycles: 2048
+WindowSize: 512
+HalfLifePeriod: 256
+KValue: 1.0
+
+Nodes:
+  - GPUs: 100
+    Count: 1
+
+Queues:
+  - Name: ai-department
+    Parent: ""
+    Priority: 100
+    DeservedGPUs: 0.0
+    Weight: 1.0
+  - Name: llm-team
+    Parent: ai-department
+    Priority: 100
+    DeservedGPUs: 30.0
+    Weight: 1.0
+  - Name: vision-team
+    Parent: ai-department
+    Priority: 100
+    DeservedGPUs: 20.0
+    Weight: 1.0
+
+Jobs:
+  llm-team:
+    GPUs: 60
+    NumPods: 1
+    NumJobs: 100
+  vision-team:
+    GPUs: 2
+    NumPods: 1
+    NumJobs: 500

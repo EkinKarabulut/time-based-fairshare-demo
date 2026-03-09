@@ -1,0 +1,22 @@
+# Copyright 2025 NVIDIA CORPORATION
+# SPDX-License-Identifier: Apache-2.0
+
+# SchedulingShard with time-based fairshare enabled.
+# Parameters are tuned for demo speed (production values differ significantly).
+
+apiVersion: kai.scheduler/v1
+kind: SchedulingShard
+metadata:
+  name: default
+spec:
+  kValue: 5.0
+  usageDBConfig:
+    clientType: prometheus
+    connectionString: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+    usageParams:
+      windowSize: 4m
+      windowType: sliding
+      halfLifePeriod: 45s
+      fetchInterval: 15s
+      stalenessPeriod: 2m
+      waitTimeout: 30s

@@ -1,0 +1,323 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "KubeCon Demo: Time-Based Fairshare GPU Allocation Oscillation",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "type": "text",
+      "title": "",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"text-align:center; padding: 8px 0;\">\n  <span style=\"font-size: 28px; font-weight: bold; color: #76B900;\">Time-Based Fairshare Demo</span>\n  <span style=\"font-size: 18px; color: #ccc; margin-left: 24px;\">100 GPU Cluster</span>\n  <span style=\"font-size: 16px; color: #4A90D9; margin-left: 24px;\">LLM Team: 30 GPU quota</span>\n  <span style=\"font-size: 16px; color: #ccc; margin-left: 8px;\">|</span>\n  <span style=\"font-size: 16px; color: #F5A623; margin-left: 8px;\">Vision Team: 20 GPU quota</span>\n  <span style=\"font-size: 16px; color: #ccc; margin-left: 8px;\">|</span>\n  <span style=\"font-size: 16px; color: #888; margin-left: 8px;\">50 GPUs Shared Pool</span>\n</div>"
+      }
+    },
+    {
+      "type": "gauge",
+      "title": "LLM Team GPUs",
+      "gridPos": { "h": 7, "w": 4, "x": 0, "y": 3 },
+      "id": 2,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "kai_queue_allocated_gpus{queue_name=\"llm-team\"}",
+          "legendFormat": "LLM Team",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#4A90D9", "value": null },
+              { "color": "#4A90D9", "value": 0 }
+            ]
+          },
+          "min": 0,
+          "max": 100,
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "text": { "titleSize": 18, "valueSize": 36 }
+      }
+    },
+    {
+      "type": "gauge",
+      "title": "Vision Team GPUs",
+      "gridPos": { "h": 7, "w": 4, "x": 4, "y": 3 },
+      "id": 3,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "kai_queue_allocated_gpus{queue_name=\"vision-team\"}",
+          "legendFormat": "Vision Team",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#F5A623", "value": null },
+              { "color": "#F5A623", "value": 0 }
+            ]
+          },
+          "min": 0,
+          "max": 100,
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "text": { "titleSize": 18, "valueSize": 36 }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "GPU Allocation Over Time",
+      "gridPos": { "h": 12, "w": 16, "x": 8, "y": 3 },
+      "id": 4,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "kai_queue_allocated_gpus{queue_name=\"llm-team\"}",
+          "legendFormat": "LLM Team",
+          "refId": "A"
+        },
+        {
+          "expr": "kai_queue_allocated_gpus{queue_name=\"vision-team\"}",
+          "legendFormat": "Vision Team",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "GPUs",
+            "axisPlacement": "auto",
+            "fillOpacity": 20,
+            "gradientMode": "scheme",
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": { "group": "A", "mode": "none" }
+          },
+          "min": 0,
+          "max": 100,
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "LLM Team" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "#4A90D9", "mode": "fixed" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Vision Team" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "#F5A623", "mode": "fixed" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": ["lastNotNull"]
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Pending GPU Demand",
+      "gridPos": { "h": 10, "w": 8, "x": 0, "y": 15 },
+      "id": 8,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "sum(kube_pod_container_resource_limits{namespace=\"workloads\", resource=\"nvidia_com_gpu\", pod=~\"llm-.*\"}\n  * on(pod, namespace) group_left() kube_pod_status_phase{namespace=\"workloads\", phase=\"Pending\"}) or vector(0)",
+          "legendFormat": "LLM Team (pending)",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(kube_pod_container_resource_limits{namespace=\"workloads\", resource=\"nvidia_com_gpu\", pod=~\"vision-.*\"}\n  * on(pod, namespace) group_left() kube_pod_status_phase{namespace=\"workloads\", phase=\"Pending\"}) or vector(0)",
+          "legendFormat": "Vision Team (pending)",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "GPUs",
+            "axisPlacement": "auto",
+            "fillOpacity": 40,
+            "gradientMode": "scheme",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": { "group": "A", "mode": "normal" }
+          },
+          "min": 0,
+          "max": 100,
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "LLM Team (pending)" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "#4A90D9", "mode": "fixed" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Vision Team (pending)" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "#F5A623", "mode": "fixed" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": ["lastNotNull"]
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Fair Share Over Time",
+      "gridPos": { "h": 10, "w": 16, "x": 8, "y": 15 },
+      "id": 7,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "max(kai_queue_fair_share_gpu{queue_name=\"LLM Team\"})",
+          "legendFormat": "LLM Team",
+          "refId": "A"
+        },
+        {
+          "expr": "max(kai_queue_fair_share_gpu{queue_name=\"Vision Team\"})",
+          "legendFormat": "Vision Team",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Fair Share (GPUs)",
+            "axisPlacement": "auto",
+            "fillOpacity": 10,
+            "gradientMode": "scheme",
+            "lineInterpolation": "smooth",
+            "lineStyle": { "dash": [10, 10], "fill": "dash" },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": { "group": "A", "mode": "none" }
+          },
+          "min": 0,
+          "max": 100,
+          "unit": "none",
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "LLM Team" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "#4A90D9", "mode": "fixed" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Vision Team" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "#F5A623", "mode": "fixed" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": ["lastNotNull"]
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": ["kubecon", "fairshare", "demo", "kai-scheduler"],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "kai-prometheus",
+          "value": "kai-prometheus"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Time-Based Fairshare Demo",
+  "uid": "fairshare-demo",
+  "version": 1
+}

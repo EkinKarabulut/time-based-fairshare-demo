@@ -1,0 +1,55 @@
+# Copyright 2025 NVIDIA CORPORATION
+# SPDX-License-Identifier: Apache-2.0
+
+# LLM Team - Post-training run (PyTorchJob, gang-scheduled)
+# 1 Master + 4 Workers = 5 pods x 10 GPUs each = 50 GPUs total
+# Gang-scheduled by KAI Scheduler — all pods must be schedulable together.
+
+apiVersion: "kubeflow.org/v1"
+kind: "PyTorchJob"
+metadata:
+  name: llm-post-training
+  namespace: workloads
+  labels:
+    kai.scheduler/queue: llm-team
+    app: llm-training
+    team: llm-team
+    workload-type: training
+spec:
+  pytorchReplicaSpecs:
+    Master:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        metadata:
+          labels:
+            app: llm-training
+            team: llm-team
+        spec:
+          schedulerName: kai-scheduler
+          terminationGracePeriodSeconds: 0
+          containers:
+            - name: pytorch
+              image: ubuntu
+              args: ["sleep", "infinity"]
+              resources:
+                limits:
+                  nvidia.com/gpu: "10"
+    Worker:
+      replicas: 4
+      restartPolicy: OnFailure
+      template:
+        metadata:
+          labels:
+            app: llm-training
+            team: llm-team
+        spec:
+          schedulerName: kai-scheduler
+          terminationGracePeriodSeconds: 0
+          containers:
+            - name: pytorch
+              image: ubuntu
+              args: ["sleep", "infinity"]
+              resources:
+                limits:
+                  nvidia.com/gpu: "10"

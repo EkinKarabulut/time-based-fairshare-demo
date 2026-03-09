@@ -1,0 +1,27 @@
+# Copyright 2025 NVIDIA CORPORATION
+# SPDX-License-Identifier: Apache-2.0
+
+# LLM Team - Always-on inference endpoints
+# 10 pods x 1 GPU each = 10 GPUs (within LLM team's 30 GPU quota)
+# Uses inference PriorityClass to prevent preemption.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: llm-inference-PODINDEX
+  labels:
+    kai.scheduler/queue: llm-team
+    app: llm-inference
+    team: llm-team
+    workload-type: inference
+spec:
+  schedulerName: kai-scheduler
+  priorityClassName: inference
+  restartPolicy: Never
+  containers:
+    - name: inference
+      image: ubuntu
+      args: ["sleep", "infinity"]
+      resources:
+        limits:
+          nvidia.com/gpu: "1"

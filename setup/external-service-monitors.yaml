@@ -1,0 +1,84 @@
+# Copyright 2025 NVIDIA CORPORATION
+# SPDX-License-Identifier: Apache-2.0
+
+# Monitors for kube-prometheus-stack to scrape KAI Scheduler metrics
+# These go in the 'monitoring' namespace with 'release: kube-prometheus-stack' label
+# so the kube-prometheus-stack Prometheus instance picks them up.
+#
+# NOTE: The scheduler's default service is headless (ClusterIP: None), which
+# doesn't work with ServiceMonitor discovery. We create a separate ClusterIP
+# service (kai-scheduler-metrics) to expose the scheduler's metrics port.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: kai-scheduler-metrics
+  namespace: kai-scheduler
+  labels:
+    app: kai-scheduler-metrics
+spec:
+  type: ClusterIP
+  selector:
+    app: kai-scheduler-default
+  ports:
+    - name: http-metrics
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kai-scheduler
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  jobLabel: kai-scheduler
+  namespaceSelector:
+    matchNames:
+      - kai-scheduler
+  selector:
+    matchLabels:
+      app: kai-scheduler-metrics
+  endpoints:
+    - port: http-metrics
+      interval: 15s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kai-queue-controller
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  jobLabel: kai-queue-controller
+  namespaceSelector:
+    matchNames:
+      - kai-scheduler
+  selector:
+    matchLabels:
+      app: queue-controller
+  endpoints:
+    - port: metrics
+      interval: 15s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kai-binder
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  jobLabel: kai-binder
+  namespaceSelector:
+    matchNames:
+      - kai-scheduler
+  selector:
+    matchLabels:
+      app: binder
+  endpoints:
+    - port: http-metrics
+      interval: 15s

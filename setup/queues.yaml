@@ -1,0 +1,72 @@
+# Copyright 2025 NVIDIA CORPORATION
+# SPDX-License-Identifier: Apache-2.0
+
+# Queue hierarchy: 100 GPU cluster
+#   ai-department (parent, 100 GPU limit)
+#   ├── llm-team    (30 GPU quota)
+#   └── vision-team (20 GPU quota)
+#   Over-quota pool: 50 GPUs, equal weight
+
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: ai-department
+spec:
+  displayName: "AI Department"
+  resources:
+    gpu:
+      quota: 100
+      overQuotaWeight: 1
+      limit: 100
+    cpu:
+      quota: 0
+      overQuotaWeight: 1
+      limit: -1
+    memory:
+      quota: 0
+      overQuotaWeight: 1
+      limit: -1
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: llm-team
+spec:
+  displayName: "LLM Team"
+  parentQueue: ai-department
+  priority: 100
+  resources:
+    gpu:
+      quota: 30
+      overQuotaWeight: 1
+      limit: -1
+    cpu:
+      quota: 0
+      overQuotaWeight: 1
+      limit: -1
+    memory:
+      quota: 0
+      overQuotaWeight: 1
+      limit: -1
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: vision-team
+spec:
+  displayName: "Vision Team"
+  parentQueue: ai-department
+  priority: 100
+  resources:
+    gpu:
+      quota: 20
+      overQuotaWeight: 1
+      limit: -1
+    cpu:
+      quota: 0
+      overQuotaWeight: 1
+      limit: -1
+    memory:
+      quota: 0
+      overQuotaWeight: 1
+      limit: -1
