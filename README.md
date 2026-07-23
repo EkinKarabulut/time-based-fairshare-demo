@@ -15,15 +15,16 @@ A live demo showing how KAI Scheduler's time-based fairshare feature solves GPU 
 
 ## Prerequisites
 
-- Kubernetes cluster with `kubectl` access
-- [fake-gpu-operator](https://github.com/run-ai/fake-gpu-operator) installed (10 GPUs per node, 100 total)
-- Helm 3
-- ~16GB RAM on cluster nodes
+- [kind](https://kind.sigs.k8s.io), `kubectl`, and Helm 3 (setup creates the cluster; set `KIND_CLUSTER_NAME` to reuse an existing one)
+- No real GPUs needed — setup installs [fake-gpu-operator](https://github.com/run-ai/fake-gpu-operator) and spreads 100 simulated GPUs across the nodes, so even a single-node kind cluster runs the full scenario (override with `GPUS_PER_NODE`)
+- ~16GB RAM available for the cluster
 
 ## Quick Start
 
 ```bash
-# 1. Install KAI Scheduler + Prometheus + Grafana
+# 1. Create kind cluster + install fake-gpu-operator, Kubeflow Training Operator,
+#    KAI Scheduler, Prometheus and Grafana. If DASH0_AUTH_TOKEN is set, it also
+#    wires the OpenTelemetry Collector to Dash0.
 ./scripts/setup.sh
 
 # 2. Port-forward Grafana
@@ -126,6 +127,24 @@ If oscillation is too slow or too fast, edit `setup/scheduling-shard-with-tbf.ya
 
 After changing, re-apply: `kubectl apply -f setup/scheduling-shard-with-tbf.yaml`
 
+## Observability (Dash0)
+
+Grafana reads metrics directly from Prometheus — that pipeline is self-contained. Optionally, an OpenTelemetry Collector can ship telemetry to [Dash0](https://www.dash0.com) as well:
+
+- **Metrics**: the collector federates the KAI metrics already scraped by Prometheus (`kai_*`, node capacity, DCGM) — no duplicate scrape configs
+- **Logs**: a daemonset agent tails container logs on every node (KAI scheduler, queue-controller, workloads)
+- **Traces**: OTLP receivers are ready at `otel-collector-opentelemetry-collector.opentelemetry:4317` (gRPC) / `:4318` (HTTP) for instrumented workloads
+
+```bash
+export DASH0_AUTH_TOKEN=<your token>                                        # required
+export DASH0_ENDPOINT_OTLP_GRPC_HOSTNAME=ingress.eu-west-1.aws.dash0.com    # optional (default)
+export DASH0_ENDPOINT_OTLP_GRPC_PORT=4317                                   # optional (default)
+export DASH0_DATASET=default                                                 # optional (default)
+./scripts/setup-observability.sh
+```
+
+Run it after `setup.sh` (the federate endpoint needs kube-prometheus-stack). Without `DASH0_AUTH_TOKEN` the script explains what to set and exits without changing the cluster. Look for `kai_queue_allocated_gpus` in Dash0 to confirm data is flowing.
+
 ## Simulator (Offline Plots)
 
 Generate static before/after comparison plots without a cluster:
@@ -158,13 +177,13 @@ python demo/kubecon-fairshare/simulation/plot_branded.py \
 
 ```bash
 # Check Prometheus is running
-kubectl get pods -n kai-scheduler -l app.kubernetes.io/name=prometheus
+kubectl get pods -n monitoring -l app.kubernetes.io/name=prometheus
 
 # Check ServiceMonitors exist
-kubectl get servicemonitors -n kai-scheduler
+kubectl get servicemonitors -n monitoring
 
 # Verify metrics are being exposed
-kubectl port-forward -n kai-scheduler svc/prometheus-operated 9090:9090 &
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090 &
 # Query: kai_queue_allocated_gpus
 ```
 
@@ -198,10 +217,19 @@ kubectl port-forward -n kai-scheduler svc/prometheus-operated 9090:9090 &
 # Remove workloads only
 ./scripts/cleanup.sh
 
-# Full teardown (removes KAI, Prometheus, Grafana)
+# Full teardown (removes KAI, Prometheus, Grafana, fake-gpu-operator, training operator)
 helm uninstall kube-prometheus-stack -n monitoring
 helm uninstall kai-scheduler -n kai-scheduler
-kubectl delete namespace workloads monitoring kai-scheduler
+helm uninstall fake-gpu-operator -n gpu-operator
+kubectl delete -k "github.com/kubeflow/training-operator.git/manifests/overlays/standalone?ref=v1.9.3"
+kubectl delete namespace workloads monitoring kai-scheduler gpu-operator
+
+# If observability was installed (setup-observability.sh)
+helm uninstall otel-collector otel-logs-agent -n opentelemetry
+kubectl delete namespace opentelemetry
+
+# Or simply delete the whole kind cluster
+kind delete cluster
 ```
 
 ## File Structure
@@ -213,12 +241,17 @@ demo/kubecon-fairshare/
     queues.yaml                      # Queue hierarchy
     scheduling-shard-no-tbf.yaml     # Config without time-based fairshare
     scheduling-shard-with-tbf.yaml   # Config with time-based fairshare
+    kube-prometheus-values.yaml      # Helm values for kube-prometheus-stack
+    external-service-monitors.yaml   # ServiceMonitors for KAI metrics
+    otel-collector-values.yaml       # OTel gateway: OTLP + federation -> Dash0
+    otel-logs-agent-values.yaml      # OTel daemonset: pod logs -> Dash0
   jobs/
     llm-inference.yaml               # Always-on inference pods
     vision-rd-job.yaml               # Vision R&D job template
     llm-training-burst.yaml          # LLM post-training template
   scripts/
     setup.sh                         # Full setup script
+    setup-observability.sh           # Optional: OTel Collector -> Dash0
     run-demo-before.sh               # "Before" demo
     run-demo-after.sh                # "After" demo
     cleanup.sh                       # Workload cleanup

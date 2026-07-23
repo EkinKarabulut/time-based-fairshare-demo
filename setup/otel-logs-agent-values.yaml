@@ -1,0 +1,71 @@
+# Copyright 2025 NVIDIA CORPORATION
+# SPDX-License-Identifier: Apache-2.0
+
+# Helm values for the OpenTelemetry Collector logs agent (daemonset mode).
+# Tails container logs on every node (KAI scheduler, queue-controller,
+# workloads, ...) and ships them to Dash0. Runs separately from the gateway
+# so the federated metrics scrape isn't duplicated per node.
+
+mode: daemonset
+image:
+  repository: otel/opentelemetry-collector-contrib
+
+presets:
+  logsCollection:
+    enabled: true
+    includeCollectorLogs: false
+  kubernetesAttributes:
+    enabled: true
+    extractAllPodLabels: true
+
+resources:
+  limits:
+    memory: 256Mi
+  requests:
+    memory: 128Mi
+
+extraEnvs:
+  - name: DASH0_AUTH_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: dash0-secrets
+        key: dash0-authorization-token
+  - name: DASH0_ENDPOINT_OTLP_GRPC_HOSTNAME
+    valueFrom:
+      secretKeyRef:
+        name: dash0-secrets
+        key: dash0-grpc-hostname
+  - name: DASH0_ENDPOINT_OTLP_GRPC_PORT
+    valueFrom:
+      secretKeyRef:
+        name: dash0-secrets
+        key: dash0-grpc-port
+  - name: DASH0_DATASET
+    valueFrom:
+      secretKeyRef:
+        name: dash0-secrets
+        key: dash0-dataset
+
+config:
+  processors:
+    batch:
+      timeout: 10s
+      send_batch_size: 1024
+
+  exporters:
+    otlp/dash0:
+      endpoint: ${DASH0_ENDPOINT_OTLP_GRPC_HOSTNAME}:${DASH0_ENDPOINT_OTLP_GRPC_PORT}
+      headers:
+        Authorization: Bearer ${DASH0_AUTH_TOKEN}
+        Dash0-Dataset: ${DASH0_DATASET}
+      tls:
+        insecure: false
+
+  service:
+    pipelines:
+      # Logs only: the gateway deployment handles traces and metrics
+      traces: null
+      metrics: null
+      logs:
+        processors: [batch]
+        exporters: [otlp/dash0]
