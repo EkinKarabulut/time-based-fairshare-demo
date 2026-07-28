@@ -1,0 +1,18 @@
+# Copyright 2025 NVIDIA CORPORATION
+# SPDX-License-Identifier: Apache-2.0
+
+# Helm values for kube-prometheus-stack, adapted from the KAI Scheduler repo
+# (docs/metrics/kube-prometheus-values.yaml). Persistence is disabled since
+# this demo runs on throwaway clusters.
+
+prometheus:
+  enabled: true
+grafana:
+  enabled: true
+  # Keep sidecars enabled so ConfigMaps labeled `grafana_datasource: "1"` /
+  # `grafana_dashboard: "1"` (datasource + demo dashboard) are auto-loaded.
+  sidecar:
+    datasources:
+      enabled: true
+    dashboards:
+      enabled: true
